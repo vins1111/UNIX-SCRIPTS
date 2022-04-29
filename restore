@@ -1,0 +1,57 @@
+#! /bin/bash 
+ # To restore the files from recyclebin to its original place
+ #check if file is passed
+   if [ $# -eq 0 ];
+   then
+        echo "No filename provided"
+         exit 1
+    fi
+ #check for every file in the argument
+  for file  in $*
+  do    
+	# if the file already exists in recycle bin  
+	if [ ! -e ~/recyclebin/$file ]
+        then 
+           echo "File does not exist."
+           exit 1
+        fi
+	# get file name and file path
+	file_name=$(basename $file)
+        abs_path=$(grep  $file_name ~/.restore.info | cut -d":" -f2) 
+	file_path=$(grep $file_name ~/.restore.info | cut -d":" -f2 | xargs dirname)
+	file_n=$(basename $abs_path)
+	file_copy=$file_n"copy"
+	#check if the file exists in the directory and overwrite or restore
+	#delete the info from .restore.info file
+
+	if [[ -e $file_path/$file_n ]]
+	then
+		echo "file already exists"
+		echo "Do you want to replace the existing file (Y?N)?"
+		read answer
+		case $answer in
+			[yY])echo "Overwriting file"
+			     mv ~/recyclebin/$file   $file_path/$file_n
+                             sed -i "/$file_name/d" ~/.restore.info;;
+			[nN])mv ~/recyclebin/$file   $file_path/$file_copy 
+
+			       	exit 0;;
+			*) echo "invalid response"
+				exit 1;;
+		esac
+	else 
+		echo "Do you want to restore the file?"
+		read response
+		case $response in 
+			[yY]) echo "Restoring file"
+				mv ~/recyclebin/$file  $file_path/$file_n
+			        sed -i "/$file_name/d" ~/.restore.info	;;
+			[nN]) echo "Not restored";;
+			*)echo "Invalid response"
+				exit 1;;
+		esac		
+
+		 
+	fi	
+  done
+
