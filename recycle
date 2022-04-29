@@ -1,0 +1,67 @@
+#!/bin/bash
+
+ #To recycle a file i.e, to move a file to recycle bin directory
+
+ #check if file is passed
+   if [ $# -eq 0 ];
+   then
+        echo "No filename provided"
+         exit 1
+    fi
+ #check for every file in the argument
+  for file  in $*
+  do 
+	if [ ! -e $file ]
+        then 
+           echo "File does not exist."
+           exit 1
+        fi 
+	if [ -d $file ]
+	then
+          echo "Cannot remove Directory"
+	  exit 1
+        fi
+        if [ $file = "recycle" ] 
+        then 
+          echo "Attempting to delete recycle - Operation aborted"
+          exit 1
+        fi
+        
+        if [ ! -d  ~/recyclebin ] 
+        then 
+          
+	   mkdir ~/recyclebin
+	fi
+
+	  abs_path=$(readlink -e $file)
+          #echo $abs_path
+ #get the basename of the file
+
+	 file_name=$(basename $file)
+         #echo $file_name 
+ #gets the inode of the file
+
+         inode=$(stat -c "%i" $file) 
+         #echo $inode
+ # saves the file as filename_inode"
+
+	 name=$file_name'_'$inode
+
+ #readlink to get the absolute path of the file and store it in a hidden file restore info
+     
+         if [ ! -e ~/.restore.info ]
+	 then 
+             touch ~/.restore.info
+	     echo "Filename  : AbsolutePath " >> ~/.restore.info
+         fi 
+         
+         #abs_path=$(readlink -e $file)
+	  sed -i "/$name/d" ~/.restore.info
+	  echo "$name  : $abs_path " >> ~/.restore.info
+
+ #move the file to recyclebin
+
+         mv $file ~/recyclebin/$name
+         echo "File removed"
+
+  done 
